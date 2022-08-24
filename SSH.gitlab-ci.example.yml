@@ -1,0 +1,22 @@
+# Example Usage of https://gitlab.msu.edu/msu-libraries/public/cicd-templates/SSH.gitlab-ci.yml,
+# refer there for detailed usage instructions.
+
+include:
+  - project: 'msu-libraries/public/cicd-templates'
+    ref: main
+    file: 'SSH.gitlab-ci.yml'
+
+stage:
+  - Deploy
+
+Deploy Job:
+  stage: Deploy
+  extends: .setup_ssh
+  tags:
+    - my-gitlab-runner-tag # required for non-MSU Library users
+  variables:
+    # Never commit a private key to a repostiory! Use CI/CD variables, preferably masked & protected.
+    ENCODED_PRIVATE_KEY: "$MY_CI_PRIVATE_KEY"
+    SERVER: "server@lib.msu.edu"
+  script:
+    - ssh deploy@SERVER echo "It worked!"

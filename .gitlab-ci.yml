@@ -1,0 +1,60 @@
+# Used to Keep GitLab and GitHub in sync when there are pushes to the default branch
+# from GitLab.
+#
+# Variables Required:
+#  * RW_CICD_TOKEN: Created via: Settings -> Access Tokens, given the token name "gitlab-ci-token" 
+#                   with "write_repository" permissions
+#  * GITHUB_USER_TOKEN: Created in GitHub via: Your Profile -> Settings -> Developer Settings ->
+#                       Personal access tokens, given the scope of "repo"
+
+stages:
+  - Release
+
+default:
+  image: alpine:latest
+
+Tag Release:
+  stage: Release
+  tags:
+    - msul-shared
+  rules:
+    - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH'
+  before_script:
+    - apk add git
+  script:
+    # Creates a date based release tag. Example: the 2nd push to the default 
+    # branch in August of 2022 would generate a tag of 22.8.2 [YY.M.N]
+    - rm -rf clone/ || true
+    - git clone https://gitlab-ci-token:$RW_CICD_TOKEN@gitlab.msu.edu/msu-libraries/public/cicd-templates.git clone/
+    - cd clone/ # doing this to avoid runner cache
+    - major_ver=$(date +'%y.%-m')
+    - latest_patch=$(git tag -l $major_ver* --sort=-v:refname | head -n 1 | cut -d'.' -f 3)
+    - "[ -z $latest_patch ] && cur_patch=-1 || cur_patch=$latest_patch"
+    - patch_ver=$(($cur_patch+1))
+    - TAG=$major_ver.$patch_ver
+    - echo "TAG=$TAG" > ../variables.env
+    - echo "Tagging new release with $TAG"
+    - git tag $TAG
+    - git push origin --tags
+  artifacts:
+    reports:
+      dotenv: variables.env
+
+GitHub Release:
+  stage: Release
+  tags:
+    - msul-shared
+  rules:
+    - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH'
+  needs:
+    - job: Tag Release
+      artifacts: true
+  before_script:
+    - apk add git curl
+  script:
+    - rm -rf cicd-templates.git
+    - git clone --mirror https://gitlab-ci-token:$RW_CICD_TOKEN@gitlab.msu.edu/msu-libraries/public/cicd-templates.git
+    - cd cicd-templates.git
+    - git push --force --mirror https://$GITHUB_USER_TOKEN@github.com/MSU-Libraries/cicd-templates.git
+    - echo "{\"tag_name\":\"${TAG}\", \"target_commitish\":\"${CI_COMMIT_SHA}\"}" > data.json
+    - "curl -X POST -H 'Accept: application/vnd.github.v3+json' -u $GITHUB_USER_TOKEN https://api.github.com/repos/MSU-Libraries/cicd-templates/releases -d '@data.json'"

@@ -1,0 +1,50 @@
+# Used to Easily add the SSH pre-setup steps to jobs
+# so that the script steps in those jobs can be ready to SSH
+# without needing to prepare access or send credentials.
+#
+# How to use:
+# Simply include the template in your pipeline, extend the job
+# you want to have SSH access configured on, then pass the required
+# variables! You should be ready to immediately SSH into your
+# server at the start of the script tag of your job with the user whose key
+# you used. See the SSH.gitlab-ci.example.yml file for an example of a pipeline
+# including this template.
+#
+# Required Variables:
+#  * ENCODED_PRIVATE_KEY: A base64 encoded private key used to connect to SERVER. Can be
+#                         generated from an existing private key using something similar to:
+#                         `base64 id_ed25519 -w0` then storing it in a CI/CD variable
+#                         (preferably masked and protected), NEVER commit to your repository!
+#  * SERVER: The server name you want to connect to (example: myserver.edu)
+
+.setup_ssh:
+  image: alpine:latest
+  variables:
+    #ENCODED_PRIVATE_KEY: ""
+    #SERVER: ""
+  tags:
+    - msul-secured
+  before_script:
+    - >
+       if [ -z $SERVER ] || [ -z $ENCODED_PRIVATE_KEY ] ; then 
+          echo "Missing one or more of the required variables: SERVER, ENCODED_PRIVATE_KEY";
+          echo "SERVER: ${SERVER}";
+          echo "ENCODED_PRIVATE_KEY: ${ENCODED_PRIVATE_KEY:0:3}...";
+          exit 1;
+       fi  
+    # Setup SSH access to a server using $ENCODED_PRIVATE_KEY and $SERVER
+    - apk add openssh-client || apt install openssh-client
+    - eval $( ssh-agent -s )
+    - echo "$ENCODED_PRIVATE_KEY" | base64 -d | ssh-add -
+    - install -d -m 700 ~/.ssh/
+    - ( umask 022; touch ~/.ssh/known_hosts )
+    - ssh-keyscan $SERVER >> ~/.ssh/known_hosts
+
+# Dummy job to pass syntax checking; will never be included in pipelines
+Deploy:
+  stage: .pre
+  extends: .setup_ssh
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "never-trigger"'
+  script:
+    - echo "setup ssh"

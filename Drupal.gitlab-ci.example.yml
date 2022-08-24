@@ -1,0 +1,41 @@
+# Example Usage of https://gitlab.msu.edu/msu-libraries/public/cicd-templates/Drupal.gitlab-ci.yml,
+# refer there for detailed usage instructions.
+
+include:
+  - project: 'msu-libraries/public/cicd-templates'
+    ref: main
+    file: 'Drupal.gitlab-ci.yml'
+
+stages:
+  - Syntax Check
+  - Deploy Devel
+  - Deploy Stage
+  - Deploy Prod
+  # Note that Deploy Prod Alt is excluded and will not be in the pipeline
+
+default:
+  tags:
+    - my-gitlab-runner-tag # required for non-MSU Library users
+  variables:
+    USER: "deploy"
+    ENCODED_PRIVATE_KEY: $CI_VAR_WITH_ENCODED_PRIVATE_SSH_KEY
+    REPO_PATH: "/home/deploy/repo/path"
+
+# We only need to add this job explicitly if we want to override the variable EXT
+Syntax Check:
+  variables:
+    EXT: ".ini"
+
+# Example overriding the when parameter to auto deploy to devel if the previous stage passed
+Deploy Devel:
+  variables:
+    SERVER: "server.devel.lib.msu.edu"
+  when: on_success
+
+Deploy Stage:
+  variables:
+    SERVER: "server.stage.lib.msu.edu"
+
+Deploy Prod:
+  variables:
+    SERVER: "server.lib.msu.edu"
