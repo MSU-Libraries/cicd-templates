@@ -80,7 +80,7 @@ Deploy Prod Alt:
     - > 
         ssh $USER@$SERVER 
         "mkdir -p $REPO_PATH && 
-        ([ -d ${REPO_PATH}/.git ] || git clone ${GIT_CLONE_URL} ${REPO_PATH}) &&
+        ([ -d ${REPO_PATH}/.git ] || git clone ${CI_REPOSITORY_URL} ${REPO_PATH}) &&
         git -C $REPO_PATH fetch origin $BRANCH &&
         git -C $REPO_PATH checkout $BRANCH &&
         git -C $REPO_PATH pull origin $BRANCH &&
