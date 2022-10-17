@@ -23,7 +23,6 @@ stages:
   - Deploy Devel
   - Devel Stage
   - Devel Prod
-  - Deploy Prod Alt
 
 Validate Syntax:
   stage: Syntax Check
@@ -48,7 +47,11 @@ Deploy Prod:
   extends: .drupal_deploy_template
 
 Deploy Prod Alt:
-  stage: Deploy Prod Alt
+  stage: Deploy Prod
+  needs:
+    - Deploy Prod
+  rules:
+    - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH
   extends: .drupal_deploy_template
   
 .drupal_deploy_template:
