@@ -79,7 +79,9 @@ Deploy Prod Alt:
           echo "REPO_PATH: ${REPO_PATH}" &&
           echo "BRANCH: ${BRANCH}" &&
           exit 1;
-       fi  
+       fi
+    - echo "$CI_PROJECT_URL"
+    - echo "${CI_PROJECT_URL:6}"
     - > 
         ssh $USER@$SERVER 
         "mkdir -p $REPO_PATH && 
