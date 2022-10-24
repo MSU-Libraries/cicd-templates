@@ -80,13 +80,10 @@ Deploy Prod Alt:
           echo "BRANCH: ${BRANCH}" &&
           exit 1;
        fi
-    - echo "$CI_PROJECT_URL"
-    - echo "${CI_PROJECT_URL:6}"
-    - echo "\$(echo ${CI_PROJECT_URL} | sed -E 's/^\s*.*:\/\///g').git"
     - > 
         ssh $USER@$SERVER 
         "mkdir -p $REPO_PATH && 
-        ([ -d ${REPO_PATH}/.git ] || git clone git@\$(echo ${CI_PROJECT_URL} | sed -E 's/^\s*.*:\/\///g').git ${REPO_PATH}) &&
+        ([ -d ${REPO_PATH}/.git ] || git clone git@\$(echo ${CI_PROJECT_URL} | sed -E 's/^\s*.*:\/\///g' | sed -E 's,\.edu\/,edu:,g).git ${REPO_PATH}) &&
         git -C $REPO_PATH fetch origin $BRANCH &&
         git -C $REPO_PATH checkout $BRANCH &&
         git -C $REPO_PATH pull origin $BRANCH &&
