@@ -1,13 +1,12 @@
-# Example Usage of https://gitlab.msu.edu/msu-libraries/public/cicd-templates/Drupal.gitlab-ci.yml,
+# Example Usage of https://gitlab.msu.edu/msu-libraries/public/cicd-templates/Git.gitlab-ci.yml,
 # refer there for detailed usage instructions.
 
 include:
   - project: 'msu-libraries/public/cicd-templates'
     ref: main
-    file: 'Drupal.gitlab-ci.yml'
+    file: 'Git.gitlab-ci.yml'
 
 stages:
-  - Syntax Check
   - Deploy
 
 default:
@@ -17,11 +16,6 @@ default:
     USER: "deploy"
     ENCODED_PRIVATE_KEY: $CI_VAR_WITH_ENCODED_PRIVATE_SSH_KEY
     REPO_PATH: "/home/deploy/repo/path"
-
-# We only need to add this job explicitly if we want to override the variable EXT
-Syntax Check:
-  variables:
-    EXT: ".ini"
 
 # Example overriding the when parameter to auto deploy to devel if the previous stage passed
 1 Deploy Devel:

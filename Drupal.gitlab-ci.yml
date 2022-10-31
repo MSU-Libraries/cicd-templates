@@ -20,9 +20,7 @@
 
 stages:
   - Syntax Check
-  - Deploy Devel
-  - Deploy Stage
-  - Deploy Prod
+  - Deploy
 
 Validate Syntax:
   stage: Syntax Check
@@ -34,22 +32,22 @@ Validate Syntax:
   script:
     - find $CI_PROJECT_DIR -type f -name "*${EXT}" | xargs -n 1 php -l
 
-Deploy Devel:
-  stage: Deploy Devel
+1 Deploy Devel:
+  stage: Deploy
   extends: .drupal_deploy_template
 
-Deploy Stage:
-  stage: Deploy Stage
+2 Deploy Stage:
+  stage: Deploy
   extends: .drupal_deploy_template
 
-Deploy Prod:
-  stage: Deploy Prod
+3 Deploy Prod:
+  stage: Deploy
   extends: .drupal_deploy_template
 
-Deploy Prod Alt:
-  stage: Deploy Prod
+4 Deploy Prod Alt:
+  stage: Deploy
   needs:
-    - Deploy Prod
+    - 3 Deploy Prod
   rules:
     - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH'
   extends: .drupal_deploy_template
