@@ -1,12 +1,12 @@
-# This template will create a pipeline for linting and deploying a Drupal
-# repository change to all environments included as stages in the pipeline.
+# This template will create a pipeline for deploying a git repository
+# to all environments included as stages in the pipeline.
 #
 # How to use:
 # Include this template in your pipeline, and select the stages from this template you
 # want to include (based on which environments are appropriate). For each of those
 # environments, override the job and set the correct SERVER to deploy to for that
 # environment and any other variables you need to change for that environment (for example
-# if you have different SSH keys used). See the Drupal.gitlab-ci.example.yml file included
+# if you have different SSH keys used). See the Git.gitlab-ci.example.yml file included
 # in this repository for an example pipeline using this template.
 #
 # Required Variables:
@@ -19,32 +19,21 @@
 #  * SERVER: The server name you want to connect to (example: myserver.edu)
 
 stages:
-  - Syntax Check
   - Deploy Devel
   - Deploy Stage
   - Deploy Prod
 
-Validate Syntax:
-  stage: Syntax Check
-  image: php:latest
-  tags:
-    - msul-shared
-  variables:
-    EXT: ".php"
-  script:
-    - find $CI_PROJECT_DIR -type f -name "*${EXT}" | xargs -n 1 php -l
-
 Deploy Devel:
   stage: Deploy Devel
-  extends: .drupal_deploy_template
+  extends: .git_deploy_template
 
 Deploy Stage:
   stage: Deploy Stage
-  extends: .drupal_deploy_template
+  extends: .git_deploy_template
 
 Deploy Prod:
   stage: Deploy Prod
-  extends: .drupal_deploy_template
+  extends: .git_deploy_template
 
 Deploy Prod Alt:
   stage: Deploy Prod
@@ -52,12 +41,13 @@ Deploy Prod Alt:
     - Deploy Prod
   rules:
     - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH'
-  extends: .drupal_deploy_template
+  extends: .git_deploy_template
   
-.drupal_deploy_template:
+.git_deploy_template:
   image: alpine:latest
   variables:
     # Commented out to not override values defined at top level
+    # But left for quick reference on required variables to be set
     #SERVER: ""
     #USER: ""
     #ENCODED_PRIVATE_KEY: ""
@@ -68,12 +58,27 @@ Deploy Prod Alt:
       when: manual
     - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH && $CI_PIPELINE_SOURCE == "schedule"'
   allow_failure: false
-  extends: .git_deploy_template
+  extends: .setup_ssh
   script:
-    - !reference [.git_deploy_template, script]
-    - ssh $USER@$SERVER "drush cc all -r /var/www/$(echo $REPO_PATH | cut -d/ -f4)"
+    - >
+       if [ -z $SERVER ] || [ -z $USER ] || [ -z $ENCODED_PRIVATE_KEY ] || [ -z $REPO_PATH ] || [ -z $BRANCH ]; then 
+          echo "Missing one or more of the required variables: SERVER, USER, ENCODED_PRIVATE_KEY, REPO_PATH, BRANCH" &&
+          echo "SERVER: ${SERVER}" &&
+          echo "USER: ${USER}" &&
+          echo "ENCODED_PRIVATE_KEY: ${ENCODED_PRIVATE_KEY:0:3}..." &&
+          echo "REPO_PATH: ${REPO_PATH}" &&
+          echo "BRANCH: ${BRANCH}" &&
+          exit 1;
+       fi
+    - > 
+        ssh $USER@$SERVER 
+        "mkdir -p $REPO_PATH && 
+        ([ -d ${REPO_PATH}/.git ] || git clone git@\$(echo ${CI_PROJECT_URL} | sed -E 's/^\s*.*:\/\///g' | sed -E 's,\.edu\/,\.edu:,g' |sed -E 's,\.com\/,\.com:,g' ).git ${REPO_PATH}) &&
+        git -C $REPO_PATH fetch origin $BRANCH &&
+        git -C $REPO_PATH checkout $BRANCH &&
+        git -C $REPO_PATH pull origin $BRANCH"
 
 include:
   - project: 'msu-libraries/public/cicd-templates'
     ref: main
-    file: 'Git.gitlab-ci.yml'
+    file: 'SSH.gitlab-ci.yml'
