@@ -8,7 +8,9 @@ include:
 
 stages:
   - Syntax Check
-  - Deploy
+  - Deploy Devel
+  - Deploy Stage
+  - Deploy Prod
 
 default:
   tags:
@@ -24,17 +26,15 @@ Syntax Check:
     EXT: ".ini"
 
 # Example overriding the when parameter to auto deploy to devel if the previous stage passed
-1 Deploy Devel:
+Deploy Devel:
   variables:
     SERVER: "server.devel.lib.msu.edu"
   when: on_success
 
-2 Deploy Stage:
+Deploy Stage:
   variables:
     SERVER: "server.stage.lib.msu.edu"
 
-3 Deploy Prod:
+Deploy Prod:
   variables:
     SERVER: "server.lib.msu.edu"
-  
-# Note that Deploy Prod Alt is excluded and will not be in the pipeline

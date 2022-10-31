@@ -19,24 +19,26 @@
 #  * SERVER: The server name you want to connect to (example: myserver.edu)
 
 stages:
-  - Deploy
+  - Deploy Devel
+  - Deploy Stage
+  - Deploy Prod
 
-1 Deploy Devel:
-  stage: Deploy
+Deploy Devel:
+  stage: Deploy Devel
   extends: .git_deploy_template
 
-2 Deploy Stage:
-  stage: Deploy
+Deploy Stage:
+  stage: Deploy Stage
   extends: .git_deploy_template
 
-3 Deploy Prod:
-  stage: Deploy
+Deploy Prod:
+  stage: Deploy Prod
   extends: .git_deploy_template
 
-4 Deploy Prod Alt:
-  stage: Deploy
+Deploy Prod Alt:
+  stage: Deploy Prod
   needs:
-    - 3 Deploy Prod
+    - Deploy Prod
   rules:
     - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH'
   extends: .git_deploy_template
