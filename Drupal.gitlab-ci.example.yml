@@ -11,6 +11,7 @@ stages:
   - Deploy Devel
   - Deploy Stage
   - Deploy Prod
+# Note that Deploy Prod Alt is excluded and will not be in the pipeline
 
 default:
   tags:
@@ -38,3 +39,11 @@ Deploy Stage:
 Deploy Prod:
   variables:
     SERVER: "server.lib.msu.edu"
+
+# To Exclude Deploy Prod Alt, you don't include it in your stages above
+# and then override the job like the below
+Deploy Prod Alt:
+  stage: Deploy Prod # Needs to be a stage that IS included
+  rules:
+    - if: $CI_COMMIT_BRANCH != ""  # Needs to be a rule that will always be true
+      when: never
