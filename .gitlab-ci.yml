@@ -3,7 +3,7 @@
 #
 # Variables Required:
 #  * RW_CICD_TOKEN: Created via: Settings -> Access Tokens, given the token name "gitlab-ci-token" 
-#                   with "write_repository" permissions
+#                   with "write_repository" permissions. The variable be in the format of [user]:[token]
 #  * GITHUB_USER_TOKEN: Created in GitHub via: Your Profile -> Settings -> Developer Settings ->
 #                       Personal access tokens, given the scope of "repo"
 
