@@ -38,6 +38,8 @@
     - echo "$ENCODED_PRIVATE_KEY" | base64 -d | ssh-add -
     - install -d -m 700 ~/.ssh/
     - ( umask 022; touch ~/.ssh/known_hosts )
+    - echo "Preparing to keyscan $SERVER"
+    - ssh-keyscan -v $SERVER
     - ssh-keyscan -v $SERVER >> ~/.ssh/known_hosts
 
 # Dummy job to pass syntax checking; will never be included in pipelines
